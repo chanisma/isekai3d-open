@@ -1,0 +1,2652 @@
+/*
+ * The design layer (docs/ref-game/11-ui.md §7): how things look, laid over the layout rules in styles.css.
+ * Since 2026-10-20 after the game's title art (이세계 사회인 — the section at the end); before, after 참고 게임's live-mode style,
+ * the layout rules in styles.css. 참고 게임 draws its HUD as bright, slightly see-through white panels
+ * with soft shadows, round icon buttons, pill-shaped buttons and tabs, its blue for what is chosen
+ * and the plumbob's green for going ahead; notifications are white cards, and the interaction menu
+ * opens as bubbles around what was clicked. Nothing here is EA art: shapes and colours only.
+ */
+
+/*
+ * The emoji: Microsoft's Fluent Emoji (flat, MIT; src/assets/fonts/FLUENT-EMOJI-LICENSE.txt),
+ * only the ones the game uses, made into a colour font (COLRv1) so every emoji on the page and on
+ * the canvas looks the same on every computer. A browser that can't draw COLRv1 skips it
+ * (tech()) and shows its own emoji.
+ */
+@font-face {
+  font-family: 'Dwellers Fluent Emoji';
+  src: url('./assets/fonts/GameFluentEmoji.woff2') format('woff2') tech(color-COLRv1);
+  font-display: swap;
+  /* Emoji only: the font also maps the space, which must stay the text font's. */
+  unicode-range: U+200D, U+203C-3299, U+FE0F, U+1F000-1FBFF;
+}
+
+/* ---------- base ---------- */
+body {
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  /* Korean lines break between words (어절), not inside one («스\n킬»); a word too long for its box still breaks */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+::selection {
+  background: rgba(42, 60, 128, 0.25);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+:focus-visible {
+  outline: 3px solid rgba(42, 60, 128, 0.55);
+  outline-offset: 2px;
+}
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+input:focus,
+select:focus {
+  border-color: var(--accent-2);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(42, 60, 128, 0.18);
+}
+select {
+  padding: 5px 8px;
+}
+
+/* the plumbob, drawn with CSS (a green diamond) */
+.plumbob {
+  display: inline-block;
+  width: 14px;
+  height: 24px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: linear-gradient(135deg, #b6f27a 0%, #4fd04a 40%, #1e9c3a 60%, #127a2c 100%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+  vertical-align: middle;
+}
+
+/* ---------- buttons ---------- */
+button.primary {
+  background: linear-gradient(180deg, var(--accent-fill) 0%, var(--accent-fill) 55%, #16224d 100%);
+  border: 1px solid #16224d;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 3px 8px rgba(22, 34, 77, 0.3);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s;
+}
+button.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 14px rgba(22, 34, 77, 0.35);
+}
+button.primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+button.primary.small {
+  padding: 5px 14px;
+  font-size: 13px;
+}
+button.ghost {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.12s, border-color 0.12s, transform 0.12s;
+}
+button.ghost:hover:not(:disabled) {
+  background: var(--hover);
+  border-color: #d8bd78;
+}
+button.ghost.on {
+  background: var(--accent-2);
+  border-color: var(--accent-2-dark);
+  color: #fff;
+}
+button.ghost.small {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.chip,
+.tabs button,
+.swatches .chip,
+.lifespan-pick .chip {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  transition: background 0.12s, border-color 0.12s;
+}
+.chip:hover,
+.tabs button:hover {
+  background: var(--hover);
+}
+.chip.on,
+.tabs button.on,
+.swatches .chip.on,
+.lifespan-pick .chip.on {
+  background: var(--accent-2);
+  border-color: var(--accent-2-dark);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(42, 60, 128, 0.3);
+}
+.trait-chip {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 999px;
+}
+.trait-chip.on {
+  background: var(--chip-on-bg);
+  border-color: var(--chip-on-line);
+  color: var(--chip-on-fg);
+  font-weight: 600;
+}
+.trait-chip.dislike {
+  background: #fdecec;
+  border-color: #f2a3a3;
+  color: #9b2c2c;
+}
+:root[data-theme='dark'] .trait-chip.dislike {
+  background: #4a2626;
+  color: #ffcdd2;
+}
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: relative;
+  z-index: 4;
+  gap: 12px;
+  padding: 7px 16px;
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 23px;
+  color: var(--accent-2-dark);
+}
+/* Fixed widths, so the bar doesn't shift as the minutes and the money change. */
+.clock {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  width: 168px;
+  flex-shrink: 0;
+  padding: 3px 14px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.clock .day {
+  width: 64px;
+  text-align: right;
+  white-space: nowrap;
+}
+.clock .time {
+  width: 62px;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--accent-2-dark);
+}
+.speeds {
+  gap: 4px;
+  border: none;
+  overflow: visible;
+}
+.speeds button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  color: var(--accent-2-dark);
+  box-shadow: var(--shadow-sm);
+}
+.speeds button + button {
+  border-left: 1px solid var(--line);
+}
+.speeds button:hover {
+  background: var(--hover);
+}
+.speeds button.on {
+  background: radial-gradient(circle at 35% 30%, #4f66b8, var(--accent-2) 60%, var(--accent-2-dark));
+  border-color: var(--accent-2-dark);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(42, 60, 128, 0.45);
+}
+.speeds svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+.money {
+  min-width: 134px;
+  text-align: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 14px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 21px;
+  color: var(--accent-dark);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+:root[data-theme='dark'] .money {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(217, 180, 95, 0.6);
+  color: #f6dd98;
+}
+.modes {
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.modes button {
+  background: transparent;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-weight: 600;
+}
+.modes button + button {
+  border-left: none;
+}
+.modes button.on {
+  background: var(--accent-2);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(42, 60, 128, 0.35);
+}
+/* free will as a switch */
+.freewill input {
+  appearance: none;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--track);
+  border: 1px solid var(--line);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin: 0;
+}
+.freewill input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.15s;
+}
+.freewill input:checked {
+  background: var(--accent-fill);
+  border-color: var(--accent-dark);
+}
+.freewill input:checked::after {
+  left: 16px;
+}
+.freewill {
+  cursor: pointer;
+  font-weight: 600;
+}
+.bill {
+  border-radius: 999px;
+}
+
+/* ---------- panels ---------- */
+.panel,
+.catalog,
+.panel.hud {
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+:root[data-theme='dark'] .panel,
+:root[data-theme='dark'] .catalog {
+  border-color: var(--line);
+}
+.panel h3,
+.catalog h3 {
+  color: var(--accent-2-dark);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+:root[data-theme='dark'] .panel h3,
+:root[data-theme='dark'] .catalog h3 {
+  color: #f0d48a;
+}
+/* portraits: the active dweller lifted out, a ring in the emotion's colour */
+.panel.hud .portrait {
+  background: var(--panel-2);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  transition: background 0.12s, border-color 0.12s, transform 0.12s;
+}
+.panel.hud .portrait:hover {
+  background: var(--hover);
+}
+.panel.hud .portrait.active {
+  background: var(--panel-solid);
+  border-color: var(--accent);
+  box-shadow: 0 3px 10px rgba(201, 161, 74, 0.25);
+}
+.panel.hud .portrait .face {
+  border-width: 3px;
+  box-shadow: 0 0 0 2px var(--panel-solid);
+}
+.pname {
+  font-weight: 700;
+}
+
+/* emotion and the moodlet tray */
+.mood-tray {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--emo) 22%, var(--panel-solid)), var(--panel-solid) 75%);
+  border: 1px solid color-mix(in srgb, var(--emo) 40%, var(--line));
+  border-left: 5px solid var(--emo);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.mood-tray .emo-name,
+.emotion .emo-name {
+  /* 35% of the emotion colour keeps every emotion at 4.5:1 or better (checked for all 16). */
+  color: color-mix(in srgb, var(--emo) 35%, var(--text));
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 17px;
+}
+.ml-chip {
+  width: 30px;
+  height: 30px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s;
+}
+.ml-chip:hover {
+  transform: scale(1.12);
+}
+.ml-chip::before {
+  background: var(--panel-solid);
+}
+.moodlets li {
+  background: var(--panel-2);
+  border-radius: 10px;
+}
+
+/* needs: a glossy rounded bar each, 참고 게임 style */
+.bar {
+  background: var(--track);
+  border-radius: 999px;
+  height: 12px;
+  box-shadow: inset 0 1px 2px rgba(22, 34, 77, 0.12);
+}
+.bar > div {
+  border-radius: 999px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+}
+.needs li {
+  gap: 10px;
+}
+.needs .nlabel {
+  font-weight: 600;
+}
+.ns-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+}
+.ns-bar > span {
+  border-radius: 999px;
+}
+.ns-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+.ns.low .ns-icon {
+  border-color: var(--danger);
+  background: #fdecec;
+}
+.need-strip:hover .ns-icon {
+  border-color: #d8bd78;
+}
+
+/* aspiration and whims: gold, like 참고 게임's */
+.asp-chip {
+  background: linear-gradient(90deg, #fff6dc, var(--panel-solid) 70%);
+  border: 1px solid #f3d27a;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+:root[data-theme='dark'] .asp-chip {
+  background: var(--panel-2);
+  border-color: rgba(255, 210, 122, 0.35);
+}
+.asp-chip-n {
+  color: var(--gold-text);
+  font-weight: 700;
+}
+.asp-chip-bar > span {
+  background: linear-gradient(90deg, #ffd54f, var(--gold));
+}
+.whim {
+  position: relative;
+  background: var(--panel-solid);
+  border: 1px solid #f3d27a;
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s;
+}
+.whim:hover {
+  transform: translateY(-1px);
+}
+.wishes li {
+  background: linear-gradient(90deg, #fff6dc, transparent);
+  border-left-color: var(--gold);
+}
+
+/* the tab bar: round icons, the open one filled with 참고 게임's blue */
+.hud-tabs {
+  border-bottom: none;
+  padding: 2px 0 6px;
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+.hud-tabs button {
+  border-bottom: none;
+  padding: 6px 0 3px;
+}
+.ht-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  font-size: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s, background 0.12s;
+}
+.hud-tabs button:hover .ht-icon {
+  transform: translateY(-1px);
+}
+.hud-tabs button.on .ht-icon {
+  background: radial-gradient(circle at 35% 30%, #4f66b8, var(--accent-2) 60%, var(--accent-2-dark));
+  border-color: var(--accent-2-dark);
+  box-shadow: 0 3px 8px rgba(42, 60, 128, 0.4);
+}
+.hud-tabs button.on .ht-label {
+  color: var(--accent-2-dark);
+  font-weight: 700;
+}
+:root[data-theme='dark'] .hud-tabs button.on .ht-label {
+  color: #f0d48a;
+}
+.ht-label {
+  font-size: 10.5px;
+}
+
+/* skills: 참고 게임's ten segments */
+.pip {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  background: var(--track);
+}
+.pip.on {
+  background: linear-gradient(180deg, #ffe082, #f5b400);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.skill-group {
+  color: var(--accent-2-dark) !important;
+  font-weight: 700;
+}
+
+/* cards inside the panel */
+.rel-card,
+.trait-list li,
+.neighbours li,
+.baby-card,
+.party-box,
+.work-panel {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.wants li button {
+  border-radius: 10px;
+}
+.pizza-btn {
+  border-radius: 999px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.pizza-btn:hover:not(:disabled) {
+  background: var(--hover);
+}
+.outings button {
+  border-radius: 999px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.work-line {
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f8efd6, var(--panel-solid));
+}
+:root[data-theme='dark'] .work-line {
+  background: rgba(217, 180, 95, 0.12);
+}
+
+/* ---------- the lot ---------- */
+.canvas-wrap {
+  border-radius: 18px;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.7), var(--shadow-lg);
+}
+:root[data-theme='dark'] .canvas-wrap {
+  box-shadow: var(--shadow-lg);
+}
+/* Floor up/down (참고 게임): which floor of the lot is shown */
+.floor-ctl {
+  position: absolute;
+  left: 14px;
+  bottom: 62px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 3;
+}
+.floor-ctl button {
+  min-width: 52px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+  cursor: pointer;
+}
+.floor-ctl button.on {
+  background: var(--accent-fill, #2e7d32);
+  border-color: var(--accent-fill, #2e7d32);
+  color: #fff;
+}
+.zoom-ctl {
+  background: var(--overlay);
+  color: var(--overlay-text);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: var(--shadow);
+}
+.zoom-ctl button {
+  border-radius: 50%;
+  background: var(--panel-2);
+  color: var(--accent-2-dark);
+  font-weight: 700;
+}
+.zoom-ctl button:hover {
+  background: var(--hover);
+}
+.hint {
+  opacity: 0.85;
+}
+
+/* interaction queue: bubbles, the current one ringed in green */
+.queue-item {
+  background: var(--overlay);
+  color: var(--overlay-text);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.queue-item.current {
+  border: 2px solid var(--accent);
+}
+.queue-item .q-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--panel-2);
+}
+.queue-item.current .q-icon {
+  width: 28px;
+  height: 28px;
+  background: #f8efd6;
+}
+.q-progress {
+  height: 4px;
+  background: linear-gradient(90deg, #f0d48a, var(--accent));
+}
+
+/* notifications: white cards (참고 게임 TNS) */
+.toast {
+  background: var(--overlay);
+  color: var(--overlay-text);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow);
+  max-width: 420px;
+}
+.toast.good {
+  border-left-color: var(--accent);
+}
+.toast.bad {
+  border-left-color: var(--danger);
+}
+.toast.moment {
+  border-left-color: var(--gold);
+  background: linear-gradient(90deg, #fff1c7, var(--overlay) 70%);
+}
+:root[data-theme='dark'] .toast.moment {
+  background: linear-gradient(90deg, rgba(242, 176, 30, 0.25), var(--overlay) 70%);
+}
+.toast.urgent {
+  border-left-color: var(--danger);
+  background: linear-gradient(90deg, #ffe0e0, var(--overlay) 70%);
+}
+:root[data-theme='dark'] .toast.urgent {
+  background: linear-gradient(90deg, rgba(229, 57, 53, 0.3), var(--overlay) 70%);
+}
+.log-panel {
+  background: var(--panel-solid) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+.log-item {
+  border-radius: 8px;
+}
+
+/* screen slam: a bright card with a big golden title */
+.slam {
+  background: radial-gradient(ellipse at 50% 0%, #fff8e1, var(--panel-solid) 70%);
+  border: 3px solid #ffd54f;
+  border-radius: 24px;
+  box-shadow: 0 0 0 6px rgba(255, 213, 79, 0.25), var(--shadow-lg);
+}
+:root[data-theme='dark'] .slam {
+  background: var(--overlay);
+}
+.slam-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 38px;
+  color: #f2a900;
+  text-shadow: 0 2px 0 #fff, 0 3px 6px rgba(160, 110, 0, 0.35);
+}
+:root[data-theme='dark'] .slam-title {
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+.slam-text {
+  color: var(--text);
+}
+
+/* ---------- interaction menu ---------- */
+.pie {
+  background: var(--overlay);
+  color: var(--overlay-text);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+}
+.pie button:hover:not(:disabled) {
+  background: var(--accent-2);
+  color: #fff;
+}
+.pie-title {
+  color: var(--accent-2-dark);
+}
+/* 참고 게임's pie menu: options as bubbles in a ring around the thing clicked */
+.pie-radial {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 6;
+}
+.pie-center {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(42, 60, 128, 0.4);
+  animation: pie-pop 0.16s ease-out both;
+}
+.pie-bubble {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 300px;
+  padding: 5px 14px 5px 5px;
+  border-radius: 999px;
+  background: var(--overlay);
+  color: var(--overlay-text);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  animation: pie-pop 0.18s ease-out both;
+  transition: background 0.1s, color 0.1s, scale 0.1s;
+}
+.pie-bubble.r {
+  transform: translate(0, -50%);
+  transform-origin: left center;
+}
+.pie-bubble.l {
+  transform: translate(-100%, -50%);
+  flex-direction: row-reverse;
+  padding: 5px 5px 5px 14px;
+  transform-origin: right center;
+}
+.pie-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pie-bubble .pie-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--panel-2);
+  flex-shrink: 0;
+}
+.pie-bubble.group .pie-icon {
+  background: #fff1c7;
+}
+.pie-bubble:hover:not(:disabled) {
+  background: var(--accent-2);
+  color: #fff;
+  border-color: var(--accent-2-dark);
+  scale: 1.06;
+}
+.pie-bubble:hover:not(:disabled) .pie-icon {
+  background: rgba(255, 255, 255, 0.25);
+}
+.pie-bubble small {
+  font-weight: 400;
+  font-size: 11px;
+  opacity: 0.75;
+}
+.pie-bubble:disabled {
+  opacity: 0.7;
+  cursor: help;
+}
+@keyframes pie-pop {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+.pie-center {
+  animation-name: pie-pop-c;
+}
+@keyframes pie-pop-c {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pie-bubble,
+  .pie-center {
+    animation: none;
+  }
+}
+
+/* ---------- dialogs ---------- */
+.modal-backdrop {
+  background: rgba(22, 34, 77, 0.35);
+  backdrop-filter: blur(3px);
+}
+.modal {
+  background: var(--panel-solid);
+  border: none;
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.modal h2 {
+  margin: -20px -20px 0;
+  padding: 14px 20px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  color: #fff;
+  background: linear-gradient(180deg, #2b3f88, var(--accent-2) 60%, var(--accent-2-dark));
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- buy catalog ---------- */
+.buy-views {
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.buy-views button {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 600;
+}
+.buy-views button.on {
+  background: var(--accent-2);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(42, 60, 128, 0.35);
+}
+.item {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+}
+.item:hover:not(.poor):not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: #d8bd78;
+  background: var(--panel-solid);
+}
+.item.on {
+  border: 2px solid var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(42, 60, 128, 0.2);
+}
+.item-icon {
+  border-radius: 12px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.12), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+}
+.item-name {
+  font-weight: 600;
+}
+.item-price {
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+.buy-money {
+  color: var(--accent-dark);
+}
+.buy-card {
+  background: var(--panel-solid);
+  border-top: 3px solid var(--accent-2);
+  box-shadow: 0 -8px 20px rgba(22, 34, 77, 0.12);
+}
+.buy-tag {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.buy-tag.skill {
+  background: #fff4d1;
+  border-color: #f3d27a;
+}
+:root[data-theme='dark'] .buy-tag.skill {
+  background: rgba(255, 202, 40, 0.15);
+}
+.buy-perk {
+  color: var(--accent-dark);
+}
+.buy-poor {
+  color: var(--danger);
+  font-weight: 600;
+}
+.placing-hint {
+  color: var(--accent-2-dark);
+  font-weight: 600;
+}
+
+/* ---------- start: main menu and Create a Dweller ---------- */
+.start {
+  background: var(--bg-grad), var(--bg);
+}
+.start h1,
+.cas-top h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--accent-2-dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.start.menu h1 {
+  font-size: 64px;
+  text-shadow: 0 3px 0 #fff, 0 6px 16px rgba(22, 34, 77, 0.2);
+}
+.start.menu h1 .plumbob {
+  width: 30px;
+  height: 52px;
+  animation: plumbob-spin 3s ease-in-out infinite;
+}
+@keyframes plumbob-spin {
+  50% {
+    transform: translateY(-6px) scaleX(0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .start.menu h1 .plumbob {
+    animation: none;
+  }
+}
+.start.menu .menu-btns {
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+}
+.cas-stage {
+  background: radial-gradient(ellipse 60% 18% at 50% 74%, rgba(22, 34, 77, 0.14), transparent 70%), linear-gradient(180deg, #e9f5fd 0%, #f7fbfe 62%, #e7eef3 62%, #dde7ee 100%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+}
+:root[data-theme='dark'] .cas-stage {
+  background: radial-gradient(ellipse at 50% 85%, rgba(217, 180, 95, 0.25), var(--panel) 60%);
+}
+.cas-panel {
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+}
+.cas-tabs {
+  border-bottom: none;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+.cas-tabs button {
+  border-bottom: none;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.cas-tabs button.on {
+  background: var(--accent-2);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(42, 60, 128, 0.35);
+}
+.cas-member {
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+.cas-member.on {
+  background: var(--panel-solid);
+  box-shadow: 0 3px 10px rgba(201, 161, 74, 0.25);
+}
+.cas-member .face {
+  border-width: 3px;
+}
+.cas-name input {
+  background: var(--panel-solid);
+  font-weight: 700;
+  border-radius: 999px;
+}
+.story-q {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--accent-2-dark);
+}
+:root[data-theme='dark'] .story-q {
+  color: #f0d48a;
+}
+.story-answers button {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+}
+.story-answers button:hover {
+  background: var(--panel-solid);
+  border-color: var(--accent-2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(42, 60, 128, 0.2);
+}
+.story-dots span {
+  background: var(--track);
+}
+.story-dots span.done {
+  background: var(--accent-fill);
+}
+.story-dots span.now {
+  background: var(--gold);
+}
+.story-result,
+.trait-desc {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.swatch {
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--panel-solid);
+  box-shadow: 0 0 0 1px var(--line), var(--shadow-sm);
+}
+.swatch.on {
+  border-color: var(--panel-solid);
+  box-shadow: 0 0 0 3px var(--accent-2), var(--shadow-sm);
+}
+.tg-label {
+  font-weight: 700;
+  color: var(--accent-2-dark);
+}
+
+/* ---------- the guide ---------- */
+.guide-card {
+  border-radius: 18px;
+  border: 2px solid #ffd54f;
+}
+
+/* ---------- career explorer, job ads, the rest ---------- */
+.cx-row {
+  border-radius: 10px;
+}
+.cx-row.on {
+  background: var(--accent-2) !important;
+  color: #fff;
+}
+.cx-skill,
+.cx-need {
+  border-radius: 999px;
+}
+
+/* CAS: the dweller on a little stage (wall and floor), the panels using the height there is */
+.cas-stage {
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+}
+.cas-figure {
+  width: 100% !important;
+  height: 220px !important;
+  object-fit: contain;
+  border-radius: 16px;
+  background: radial-gradient(ellipse 45% 10% at 50% 88%, rgba(22, 34, 77, 0.16), transparent 70%), linear-gradient(180deg, #dff0fb 0%, #f4f9fd 68%, #e3ebf1 68%, #d4e0e9 100%);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+:root[data-theme='dark'] .cas-figure {
+  background: radial-gradient(ellipse 45% 10% at 50% 88%, rgba(0, 0, 0, 0.35), transparent 70%), linear-gradient(180deg, #23394a 0%, #1f3443 68%, #182a37 68%, #14232e 100%);
+}
+@media (min-width: 901px) {
+  .cas-main {
+    align-items: stretch;
+  }
+  .cas-panel {
+    min-height: min(640px, calc(100vh - 190px));
+  }
+  .cas-body {
+    max-height: calc(100vh - 290px);
+  }
+}
+.title-figures {
+  margin: -6px 0 -4px;
+}
+.speeds {
+  position: relative;
+}
+.speeds .ultra {
+  position: absolute;
+  right: -8px;
+  top: -7px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff9f43, #ef6c00);
+  box-shadow: 0 1px 4px rgba(239, 108, 0, 0.45);
+  pointer-events: none;
+}
+.bill {
+  font-weight: 600;
+}
+
+/* ---------- legibility (checked with WCAG contrast, 11-ui §7.3) ---------- */
+.hint {
+  opacity: 1;
+}
+/* Greyed-out buttons stay readable: faded less, the label still dark enough to read. */
+button:disabled {
+  opacity: 0.62;
+}
+.fear-chip {
+  color: #6a1b9a;
+  border-color: #ba68c8;
+  background: #f6e9f9;
+}
+:root[data-theme='dark'] .fear-chip {
+  color: #e1bee7;
+  border-color: #ab47bc;
+  background: transparent;
+}
+.money {
+  color: var(--accent-dark);
+}
+button:disabled small,
+button:disabled .muted {
+  color: var(--text);
+}
+.slam-title {
+  color: #a86f00;
+}
+:root[data-theme='dark'] .slam-title {
+  color: #ffd54f;
+}
+.log-badge.urgent {
+  background: #c62828;
+}
+.cx-need.ok {
+  color: var(--good-text);
+  border-color: #8bc79a;
+  background: #eef6ea;
+}
+:root[data-theme='dark'] .cx-need.ok {
+  border-color: #4f8a5c;
+  background: rgba(76, 175, 80, 0.16);
+}
+.guide-card .muted {
+  color: #5c5c5c;
+}
+/* Text colours that were picked for the dark background, now per theme. */
+.rel-label,
+.family-tie {
+  color: var(--gold-text);
+}
+.asp-goals li.met,
+.sentiment.good,
+.party-box li.done,
+.offer-work,
+.buy-perk {
+  color: var(--good-text);
+}
+.sentiment.bad,
+.buy-poor {
+  color: var(--bad-text);
+}
+:root[data-theme='dark'] .wishes li {
+  background: linear-gradient(90deg, rgba(255, 210, 122, 0.14), transparent);
+}
+
+/* neighbours by household (neighbourhood.ts) */
+.nb-house + .nb-house {
+  margin-top: 10px;
+}
+.nb-house-name {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.neighbours li.nb-away .nb-name b {
+  opacity: 0.85;
+}
+.neighbours .face.small.kid {
+  width: 19px;
+  height: 19px;
+  margin: 0 2.5px;
+}
+.nb-name small {
+  font-weight: 400;
+}
+.nb-house .neighbours li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: 8px;
+  row-gap: 4px;
+}
+.nb-house .nb-actions {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: 4px;
+}
+.nb-house .nb-actions button {
+  padding: 1px 8px;
+}
+
+/* what the dweller knows about a neighbour (dwellerKnowledge.ts) */
+.nb-known {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.nb-fact {
+  font-size: 11px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.nb-fact.like {
+  background: var(--chip-on-bg);
+  border-color: var(--chip-on-line);
+  color: var(--chip-on-fg);
+}
+.nb-fact.job {
+  background: #fff4d1;
+  border-color: #f3d27a;
+  color: var(--gold-text);
+  font-weight: 600;
+}
+:root[data-theme='dark'] .nb-fact.job {
+  background: rgba(255, 202, 40, 0.15);
+}
+.nb-fact.unknown {
+  color: var(--muted);
+  border-style: dashed;
+}
+.cx-neighbours {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+/* a neighbour on the phone, and the street's news */
+.phone-card {
+  position: fixed;
+  right: 20px;
+  top: 70px;
+  width: 300px;
+  z-index: 25;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--panel-solid);
+  border: 2px solid var(--accent-2);
+  box-shadow: var(--shadow-lg);
+  animation: phone-ring 0.5s ease-in-out 3;
+}
+@keyframes phone-ring {
+  25% {
+    transform: rotate(-1.5deg);
+  }
+  75% {
+    transform: rotate(1.5deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone-card {
+    animation: none;
+  }
+}
+.phone-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.phone-head .face.small {
+  width: 28px;
+  height: 28px;
+  border-width: 2px;
+}
+.phone-card p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.phone-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.street-news {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+}
+.street-news ul {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+/* Create a Dweller: gender (gender.ts) */
+.cas-gender {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.cas-check {
+  display: block;
+  font-size: 13px;
+  margin: 3px 0;
+}
+.cas-note {
+  margin-bottom: 8px;
+}
+.gender-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.gender-line details {
+  width: 100%;
+}
+
+/* Moving house: the homes on offer, each with a small plan of its floors */
+.modal.home-market {
+  width: min(1100px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+.home-market-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.home-market-head h2 {
+  margin: 0;
+}
+.home-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.home-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.home-card.on {
+  border-color: var(--accent);
+}
+.home-card-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.home-card p {
+  margin: 0;
+}
+.plan-map {
+  max-width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  background: #8fbf5a;
+  border-radius: 8px;
+}
+.home-facts {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.home-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+}
+
+/* ==========================================================================================
+ * 이세계 사회인 (2026-10-20, at the user's request): the play screen dressed after the game's title
+ * art — a navy night sky with gold lines along the top, cream parchment panels framed in gold with
+ * filigree corners, navy title bands with gold serif lettering, buttons like the title's START plate.
+ * The ornaments (src/assets/ui, originals in art/ui) were made with Codex image generation from
+ * the title art. Later rules here win over the 참고 게임-style ones above.
+ * ========================================================================================== */
+
+/* headings in the title art's serif */
+.modal h2,
+.panel h3,
+.catalog h3,
+.slam-title,
+.story-q,
+.start h1,
+.cas-top h1,
+.guide-head,
+.clock .time,
+.money,
+.mood-tray .emo-name,
+.emotion .emo-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+::selection {
+  background: rgba(217, 180, 95, 0.35);
+}
+:focus-visible {
+  outline: 3px solid rgba(201, 161, 74, 0.8);
+}
+
+/* ---- buttons: the title's plates ---- */
+button.primary {
+  background: var(--navy-grad);
+  border: 1.5px solid #d9b45f;
+  border-radius: 10px;
+  color: #fbefcf;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(248, 227, 164, 0.22), 0 3px 10px rgba(22, 34, 77, 0.32);
+}
+button.primary:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px rgba(248, 227, 164, 0.4), 0 0 0 2px rgba(240, 212, 138, 0.45), 0 6px 16px rgba(22, 34, 77, 0.38);
+}
+button.ghost {
+  border-radius: 10px;
+  border-color: var(--line);
+}
+button.ghost:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+button.ghost.on {
+  background: var(--navy-grad);
+  border-color: #d9b45f;
+  color: #fbefcf;
+}
+.chip.on,
+.tabs button.on,
+.swatches .chip.on,
+.lifespan-pick .chip.on,
+.cas-tabs button.on,
+.buy-views button.on,
+.modes button.on {
+  background: var(--navy-grad);
+  border-color: #d9b45f;
+  color: #fbefcf;
+  box-shadow: 0 2px 6px rgba(22, 34, 77, 0.3);
+}
+:root[data-theme='dark'] .chip.on,
+:root[data-theme='dark'] .tabs button.on,
+:root[data-theme='dark'] .cas-tabs button.on,
+:root[data-theme='dark'] .buy-views button.on {
+  background: var(--gold-grad);
+  color: #16224d;
+}
+
+/* ---- the top bar: night sky, gold lines ---- */
+.topbar {
+  background: radial-gradient(600px 80px at 20% 0%, rgba(120, 150, 240, 0.35), transparent 70%), var(--navy-grad);
+  color: #f3ead2;
+  border-bottom: none;
+  box-shadow: 0 2px 0 #c9a14a, 0 3px 0 rgba(248, 227, 164, 0.55), 0 6px 18px rgba(22, 34, 77, 0.35);
+  backdrop-filter: none;
+}
+.topbar .brand {
+  /* The logo's navy letters on a soft halo of the title art's bright sky, so they read on the navy bar. */
+  padding: 0 14px;
+  margin: -7px 0 -7px -16px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  background: radial-gradient(ellipse 62% 64% at 50% 50%, rgba(255, 249, 230, 0.97) 0%, rgba(255, 246, 222, 0.88) 50%, rgba(255, 246, 222, 0) 100%);
+}
+.topbar .brand-logo {
+  height: 46px;
+  filter: drop-shadow(0 1px 1px rgba(22, 34, 77, 0.25));
+}
+.topbar .clock,
+.topbar .money,
+.topbar .modes {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(217, 180, 95, 0.6);
+}
+.topbar .clock .day {
+  color: #d8cfae;
+}
+.topbar .clock .time,
+.topbar .money {
+  color: #f6dd98;
+}
+.topbar .speeds button {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(217, 180, 95, 0.55);
+  color: #f3ead2;
+  box-shadow: none;
+}
+.topbar .speeds button:hover {
+  background: rgba(217, 180, 95, 0.2);
+}
+.topbar .speeds button.on {
+  background: var(--gold-grad);
+  border-color: #f8e3a4;
+  color: #16224d;
+  box-shadow: 0 0 12px rgba(240, 200, 110, 0.55);
+}
+.topbar .modes button {
+  color: #e9e1c7;
+}
+.topbar .modes button.on {
+  background: var(--gold-grad);
+  border-color: transparent;
+  color: #16224d;
+}
+.topbar .freewill {
+  color: #f3ead2;
+}
+.topbar .freewill input {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(217, 180, 95, 0.6);
+}
+.topbar .freewill input:checked {
+  background: #c9a14a;
+  border-color: #f0d48a;
+}
+.topbar button.ghost {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(217, 180, 95, 0.55);
+  color: #f3ead2;
+  box-shadow: none;
+}
+.topbar button.ghost:hover:not(:disabled) {
+  background: rgba(217, 180, 95, 0.22);
+  border-color: #f0d48a;
+}
+.topbar button.ghost.on {
+  background: var(--gold-grad);
+  border-color: #f8e3a4;
+  color: #16224d;
+}
+.topbar .muted {
+  color: #d8cfae;
+}
+
+/* ---- panels: parchment framed in gold, filigree at two corners ---- */
+.panel,
+.catalog,
+.panel.hud,
+.cas-panel,
+.cas-stage {
+  position: relative;
+  isolation: isolate;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  box-shadow: inset 0 0 0 3px var(--panel-solid), inset 0 0 0 4px rgba(201, 161, 74, 0.35), var(--shadow);
+  backdrop-filter: blur(10px);
+}
+.panel.hud::before,
+.panel.hud::after,
+.catalog::before,
+.catalog::after,
+.cas-panel::before,
+.cas-panel::after,
+.modal::after {
+  content: '';
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  background: url('./assets/ui/corner.webp') no-repeat top left / contain;
+  pointer-events: none;
+  /* Behind what the panel holds (the panel's blur makes it a stacking context), over its parchment. */
+  z-index: -1;
+  opacity: 0.95;
+}
+.panel.hud::before,
+.catalog::before,
+.cas-panel::before {
+  top: 3px;
+  left: 3px;
+}
+.panel.hud::after,
+.catalog::after,
+.cas-panel::after,
+.modal::after {
+  right: 3px;
+  bottom: 3px;
+  transform: rotate(180deg);
+}
+.panel h3,
+.catalog h3 {
+  color: var(--accent-2-dark);
+  font-size: 14.5px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, #c9a14a, rgba(201, 161, 74, 0)) 1;
+}
+
+/* the dweller panel inside */
+.panel.hud .portrait.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(240, 212, 138, 0.45), 0 3px 10px rgba(201, 161, 74, 0.3);
+}
+.hud-tabs {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.hud-tabs button.on .ht-icon {
+  background: radial-gradient(circle at 35% 30%, #4f66b8, #24357a 60%, #16224d);
+  border-color: #d9b45f;
+  box-shadow: 0 0 0 2px rgba(240, 212, 138, 0.45), 0 3px 8px rgba(22, 34, 77, 0.35);
+}
+.hud-tabs button.on .ht-label {
+  color: var(--accent-2-dark);
+}
+
+/* ---- windows: a navy band with the title in gold ---- */
+.modal-backdrop {
+  background: rgba(10, 16, 42, 0.5);
+}
+.modal {
+  position: relative;
+  /* Its own stacking context, so the filigree (z-index -1) sits over its parchment, under its content. */
+  isolation: isolate;
+  background: var(--panel-solid);
+  border: 1.5px solid var(--accent);
+  box-shadow: inset 0 0 0 3px var(--panel-solid), inset 0 0 0 4px rgba(201, 161, 74, 0.3), var(--shadow-lg);
+}
+.modal h2 {
+  color: #f6dd98;
+  background: radial-gradient(500px 60px at 15% 0%, rgba(120, 150, 240, 0.35), transparent 70%), var(--navy-grad);
+  border-bottom: 2px solid #c9a14a;
+  box-shadow: 0 1px 0 rgba(248, 227, 164, 0.5);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+.modal h2 .muted {
+  color: #d8cfae;
+}
+
+/* ---- the lot in a gold frame ---- */
+.canvas-wrap {
+  box-shadow: 0 0 0 2px #e7cf91, 0 0 0 5px #16224d, 0 0 0 6px #c9a14a, var(--shadow-lg);
+}
+.floor-ctl button.on {
+  background: var(--navy-grad);
+  border-color: #d9b45f;
+  color: #fbefcf;
+}
+.zoom-ctl {
+  border: 1px solid var(--line);
+}
+
+/* ---- the queue, notifications, the menu ---- */
+.q-progress {
+  background: var(--gold-grad);
+}
+.toast {
+  border-left-color: var(--accent-2);
+}
+.toast.good {
+  border-left-color: #3f9a5a;
+}
+.pie-center {
+  background: var(--navy-grad);
+  border: 1px solid #d9b45f;
+  color: #f6dd98;
+}
+.pie-bubble:hover:not(:disabled) {
+  background: var(--navy-grad);
+  border-color: #d9b45f;
+  color: #fbefcf;
+}
+
+/* ---- the guide card and the screen slam ---- */
+.guide-card {
+  background: var(--panel-solid);
+  border: 1.5px solid var(--accent);
+  box-shadow: inset 0 0 0 3px var(--panel-solid), inset 0 0 0 4px rgba(201, 161, 74, 0.35), var(--shadow-lg);
+}
+.slam {
+  border-color: var(--accent);
+}
+
+/* ---- Create a Dweller: a sky over parchment instead of 참고 게임's studio blue ---- */
+.cas-figure {
+  background: radial-gradient(ellipse 45% 10% at 50% 88%, rgba(22, 34, 77, 0.16), transparent 70%), linear-gradient(180deg, #dfe8f8 0%, #f5f1e6 66%, #ebdfc2 66%, #e1d1a8 100%);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+:root[data-theme='dark'] .cas-figure {
+  background: radial-gradient(ellipse 45% 10% at 50% 88%, rgba(0, 0, 0, 0.35), transparent 70%), linear-gradient(180deg, #24357a 0%, #1b2961 66%, #141f4a 66%, #10193d 100%);
+}
+
+/* ---- dropdowns hung from the top bar (알림 · 🧠 · 🛠): parchment, so they don't take the bar's cream text ---- */
+.topbar .log-panel {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.topbar .log-panel .muted {
+  color: var(--muted);
+}
+.topbar .log-panel button.ghost {
+  background: var(--panel-2);
+  border-color: var(--line);
+  color: var(--text);
+}
+.topbar .log-panel button.ghost:hover:not(:disabled) {
+  background: var(--hover);
+  border-color: var(--accent);
+}
+.log-filter button {
+  color: var(--text);
+}
+.log-filter button.on {
+  background: var(--chip-on-bg);
+  border-color: var(--chip-on-line);
+  color: var(--chip-on-fg);
+}
+
+/* the screen slam's title lettered like the title art: navy with a gold rim, not a thin gold */
+.slam-title {
+  color: var(--navy);
+  text-shadow: 0 1px 0 #fff8e1, 0 2px 0 #d9b45f, 0 0 14px rgba(240, 212, 138, 0.7);
+}
+:root[data-theme='dark'] .slam-title {
+  color: #f6dd98;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 0 14px rgba(240, 212, 138, 0.35);
+}
+
+/* the look window (DwellerStyler) has no navy band — its title is lettered like a panel heading, the dweller framed in gold */
+.styler-title {
+  font-family: var(--font-display);
+  color: var(--accent-2-dark);
+  padding-bottom: 4px;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, #c9a14a, rgba(201, 161, 74, 0)) 1;
+}
+.styler-title .muted {
+  font-family: var(--font-body);
+}
+.styler-stage {
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--panel-solid), 0 0 0 5px rgba(201, 161, 74, 0.35);
+}
+
+/* ---- the top bar on one row at every width: the clock never breaks, labels fold into icons as it narrows ---- */
+.topbar {
+  flex-wrap: nowrap;
+}
+.topbar > * {
+  flex-shrink: 0;
+}
+.topbar .spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.clock {
+  width: auto;
+  min-width: 150px;
+}
+.clock .time {
+  width: auto;
+  min-width: 64px;
+  white-space: nowrap;
+}
+.topbar .money,
+.topbar button,
+.topbar label {
+  white-space: nowrap;
+}
+.topbar button.ghost .tb-label,
+.topbar .modes .tb-label {
+  margin-left: 1px;
+}
+/* 1536 is a 1920 screen at 125 %: the right-hand buttons become icons (their names stay as tooltips) */
+@media (max-width: 1600px) {
+  .topbar > button.ghost .tb-label,
+  .topbar .log-wrap > button.ghost .tb-label {
+    display: none;
+  }
+  .topbar > button.ghost,
+  .topbar .log-wrap > button.ghost {
+    min-width: 36px;
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+}
+@media (max-width: 1366px) {
+  .topbar {
+    gap: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .topbar .modes .tb-label {
+    display: none;
+  }
+}
+@media (max-width: 1140px) {
+  .topbar .freewill .tb-label {
+    display: none;
+  }
+  .topbar .brand {
+    display: none;
+  }
+}
+.topbar .money {
+  min-width: 112px;
+}
+@media (max-width: 1140px) {
+  .topbar {
+    gap: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .clock {
+    min-width: 132px;
+    padding: 3px 10px;
+  }
+  .topbar .money {
+    min-width: 96px;
+    font-size: 19px;
+  }
+}
+/* 961–1180 px (a 1024 or 1152 screen): the panel stays beside the lot, a little narrower, rather than dropping under it */
+@media (min-width: 961px) and (max-width: 1180px) {
+  .app > .layout {
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
+  .app > .layout.with-catalog {
+    grid-template-columns: 270px minmax(0, 1fr) 250px;
+  }
+}
+
+/* muted words inside something selected (navy) take its cream, a little dimmer */
+button.on .muted,
+.chip.on .muted,
+.cx-row.on .muted {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* the catalog's four views as an even 2 × 2, not three and one left over */
+.buy-views {
+  grid-template-columns: repeat(2, 1fr);
+  border-radius: 16px;
+}
+
+/* filigree only at the bottom-right of a panel (as on windows): the top-left is where each panel's
+   first line starts — the portraits, the catalog's title — and an ornament under it only clutters */
+.panel.hud::before,
+.catalog::before,
+.cas-panel::before {
+  content: none;
+}
+
+/* 집 구하기: its header (title + ✕) is the window's navy band, edge to edge like every other window's */
+.home-market-head {
+  margin: -20px -20px 12px;
+  padding-right: 16px;
+  background: radial-gradient(500px 60px at 15% 0%, rgba(120, 150, 240, 0.35), transparent 70%), var(--navy-grad);
+  border-bottom: 2px solid #c9a14a;
+  box-shadow: 0 1px 0 rgba(248, 227, 164, 0.5);
+}
+.home-market-head h2 {
+  flex: 1;
+  background: none;
+  border-bottom: none;
+  box-shadow: none;
+}
+.home-market-head button.ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(217, 180, 95, 0.6);
+  color: #f3ead2;
+}
+.home-market-head button.ghost:hover:not(:disabled) {
+  background: rgba(217, 180, 95, 0.25);
+  border-color: #f0d48a;
+}
+.home-card-head .chip {
+  padding: 1px 9px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.guide-head {
+  text-wrap: balance;
+}
+/* a lone button in the look window's column sits at its own width, not stretched across */
+.styler-side > button {
+  align-self: flex-start;
+}
+
+/* ---- Create a Dweller: fill the tall panels with intent instead of leaving their lower halves empty ---- */
+.cas-panel {
+  display: flex;
+  flex-direction: column;
+}
+.cas-body {
+  flex: 1;
+}
+/* the story questions sit in the middle of their panel, a little larger, like a card being read */
+.cas-body > .story {
+  min-height: 100%;
+  justify-content: center;
+  padding: 8px 18px 18px;
+  gap: 14px;
+}
+.cas-body > .story .story-q {
+  font-size: 21px;
+}
+.story-answers {
+  gap: 10px;
+}
+.story-answers button {
+  padding: 18px 16px;
+  font-size: 15px;
+}
+/* «이 심 빼기» at the foot of the dweller's card, away from the things that make the dweller */
+.cas-stage .cas-remove2 {
+  margin-top: auto;
+}
+.lifespan-pick .chip {
+  font-size: 13px;
+}
+/* the look rows' names as one column, so every row of swatches and chips starts at the same line */
+.cas-body .swatches .sw-label {
+  width: 64px;
+  flex-shrink: 0;
+}
+:root[data-theme='dark'] .cas-stage {
+  background: radial-gradient(ellipse at 50% 85%, rgba(120, 150, 240, 0.14), var(--panel) 60%);
+}
+/* the job windows' «닫기» at the bottom-right like every other window's, not a bar across the whole width */
+.modal.job-modal > button.ghost:last-child {
+  align-self: flex-end;
+  min-width: 96px;
+}
+
+/* ==========================================================================================
+ * Gold line icons on the UI's own buttons (2026-10-20, ui/Icon.tsx, Lucide): gold on parchment,
+ * pale gold on navy, navy on a gold plate. Emoji stay for what's in the game (needs, objects, …).
+ * ========================================================================================== */
+:root {
+  --icon: #9a7224;
+  --icon-on-navy: #f0d48a;
+}
+:root[data-theme='dark'] {
+  --icon: #e3c06f;
+}
+.ui-icon {
+  width: 1.18em;
+  height: 1.18em;
+  flex: none;
+  vertical-align: -0.22em;
+  color: var(--icon);
+}
+.ui-icon.filled {
+  fill: currentColor;
+}
+button > .ui-icon:first-child:not(:only-child) {
+  margin-right: 0.18em;
+}
+/* on navy: the top bar, navy plates and the selected chips and tabs */
+.topbar .ui-icon,
+button.primary .ui-icon,
+button.ghost.on .ui-icon,
+.chip.on .ui-icon,
+.tabs button.on .ui-icon,
+.buy-views button.on .ui-icon,
+.cas-tabs button.on .ui-icon,
+.item-icon .ui-icon,
+.hud-tabs button.on .ht-icon .ui-icon,
+.pie-bubble:hover:not(:disabled) .ui-icon {
+  color: var(--icon-on-navy);
+}
+/* on a gold plate (the top bar's chosen mode and buttons) */
+.topbar .modes button.on .ui-icon,
+.topbar button.ghost.on .ui-icon {
+  color: #16224d;
+}
+:root[data-theme='dark'] .chip.on .ui-icon,
+:root[data-theme='dark'] .tabs button.on .ui-icon,
+:root[data-theme='dark'] .buy-views button.on .ui-icon,
+:root[data-theme='dark'] .cas-tabs button.on .ui-icon {
+  color: #16224d;
+}
+/* sizes inside the round buttons */
+.ht-icon .ui-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: 0;
+}
+.zoom-ctl button .ui-icon {
+  width: 15px;
+  height: 15px;
+  vertical-align: 0;
+}
+.zoom-ctl button {
+  display: grid;
+  place-items: center;
+}
+.zoom-ctl button.on .ui-icon {
+  color: var(--icon-on-navy);
+}
+.zoom-ctl button.on {
+  background: var(--navy-grad);
+}
+.pie-icon .ui-icon,
+.item-icon .ui-icon {
+  width: 60%;
+  height: 60%;
+  vertical-align: 0;
+}
+.topbar button.ghost .ui-icon {
+  width: 17px;
+  height: 17px;
+}
+
+/* moving house: rent or buy, side by side (2026-10-20) */
+.home-tenure {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.home-tenure button {
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+
+/* The guide waits while a window or the arcade is open (it never points inside one). */
+body:has(.modal-backdrop) .guide-card,
+body:has(.modal-backdrop) .guide-ring,
+body:has(.arcade) .guide-card,
+body:has(.arcade) .guide-ring {
+  visibility: hidden;
+}
+
+/* what's known of a neighbour (DwellerPanel KnownLine): competencies, and how much is known */
+.nb-fact.skill {
+  border-color: rgba(42, 60, 128, 0.35);
+  background: rgba(42, 60, 128, 0.08);
+}
+:root[data-theme='dark'] .nb-fact.skill {
+  background: rgba(240, 212, 138, 0.12);
+  border-color: rgba(240, 212, 138, 0.35);
+}
+.nb-share {
+  display: inline-block;
+  width: 34px;
+  height: 5px;
+  margin-right: 2px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.nb-share span {
+  display: block;
+  height: 100%;
+  background: var(--gold-grad);
+}
+
+/* neighbours' couples and the street's empty houses */
+.nb-partner {
+  margin-left: 6px;
+  color: var(--accent-dark);
+  font-weight: 400;
+}
+.nb-empty {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+/* fears in the Simology tab (fears.ts): a card each, with how far through it they are */
+.fear-card {
+  margin: 6px 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.fear-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fear-bar {
+  flex: 1;
+  max-width: 90px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+.fear-bar span {
+  display: block;
+  height: 100%;
+  background: var(--gold-grad);
+}
+.fear-line {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* characters on their way to the lot (LotView.onLoading): a quiet line at the top of the lot */
+.lot-loading {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(22, 34, 77, 0.82);
+  border: 1px solid rgba(217, 180, 95, 0.7);
+  color: #fbefcf;
+  font-size: 12.5px;
+  pointer-events: none;
+}
+.lot-spin {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(240, 212, 138, 0.3);
+  border-top-color: #f0d48a;
+  animation: lot-spin 0.8s linear infinite;
+}
+@keyframes lot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* lot traits earned by living (BuyCatalog): how close the home is to each */
+.item.lot-trait {
+  cursor: default;
+  position: relative;
+}
+.lot-lived {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 6px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--track);
+  overflow: hidden;
+}
+.lot-lived span {
+  display: block;
+  height: 100%;
+  background: var(--gold-grad);
+}
+
+/* the controls (GameView): a round gold button at the lot's bottom left, its card above it */
+.keys-help {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 6;
+}
+.keys-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 180, 95, 0.85);
+  background: rgba(22, 34, 77, 0.86);
+  color: #f0d48a;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.keys-btn:hover,
+.keys-btn.on {
+  background: var(--navy-grad);
+  box-shadow: 0 0 0 2px rgba(240, 212, 138, 0.35), var(--shadow);
+}
+.keys-btn .ui-icon {
+  width: 17px;
+  height: 17px;
+  vertical-align: 0;
+  color: var(--icon-on-navy);
+}
+/* the camera buttons move over to make room for it */
+.canvas-wrap .zoom-ctl {
+  left: 52px;
+}
+.keys-pop {
+  position: absolute;
+  left: 0;
+  bottom: 44px;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 48px));
+  padding: 10px 14px 12px;
+  border-radius: 14px;
+  background: rgba(22, 34, 77, 0.94);
+  border: 1px solid rgba(217, 180, 95, 0.75);
+  color: #fbefcf;
+  box-shadow: var(--shadow-lg);
+}
+.keys-pop h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #f0d48a;
+}
+.keys-pop dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 14px;
+  margin: 0;
+  font-size: 12.5px;
+}
+.keys-pop dl > div {
+  display: contents;
+}
+.keys-pop dt {
+  color: #f0d48a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.keys-pop dd {
+  margin: 0;
+}
+
+/* an AI work card about a fact from the job's major (aiQuestions toCareerEvent `major`) */
+.career-event-major {
+  display: inline-block;
+  margin: 6px 0 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 180, 95, 0.7);
+  background: rgba(217, 180, 95, 0.14);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* where to look (LotSwitch): home and each dweller's work lot, a round button each at the lot's top right */
+.lot-switch {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 6;
+  display: flex;
+  gap: 8px;
+}
+.lot-switch button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.lot-switch .ls-dot {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 180, 95, 0.85);
+  background: rgba(22, 34, 77, 0.86);
+  color: #f0d48a;
+  font-size: 18px;
+  box-shadow: var(--shadow);
+}
+.lot-switch .ls-dot .ui-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: 0;
+  color: var(--icon-on-navy);
+}
+.lot-switch button:hover .ls-dot {
+  background: var(--navy-grad);
+}
+.lot-switch button.on .ls-dot {
+  background: var(--gold-grad);
+  border-color: #f0d48a;
+  box-shadow: 0 0 0 3px rgba(240, 212, 138, 0.45), var(--shadow);
+}
+.lot-switch button.on .ls-dot .ui-icon {
+  color: #16224d;
+}
+.lot-switch button.alarm .ls-dot::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef5350;
+  border: 2px solid #fff;
+}
+.lot-switch .ls-name {
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(22, 34, 77, 0.78);
+  color: #fbefcf;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* going along to work (DwellerPanel FollowToggle): a switch a dweller, in the job tab */
+.follow-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.follow-toggle input[role='switch'] {
+  appearance: none;
+  flex-shrink: 0;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--track);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.follow-toggle input[role='switch']::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s;
+}
+.follow-toggle input[role='switch']:checked {
+  background: var(--accent-fill, #2e7d32);
+  border-color: var(--accent-fill, #2e7d32);
+}
+.follow-toggle input[role='switch']:checked::after {
+  transform: translateX(16px);
+}
+.follow-toggle input[role='switch']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.lot-switch button:focus {
+  outline: none;
+}
+.lot-switch button:focus-visible .ls-dot {
+  outline: 2px solid #f0d48a;
+  outline-offset: 2px;
+}
+
+/* the character pack doesn't fit this game (PackNotice): why dwellers are shapes, and the new pack */
+.pack-notice {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(640px, calc(100% - 200px));
+  padding: 8px 10px 8px 14px;
+  border-radius: 14px;
+  background: rgba(22, 34, 77, 0.9);
+  border: 1px solid rgba(217, 180, 95, 0.75);
+  color: #fbefcf;
+  font-size: 12.5px;
+  box-shadow: var(--shadow);
+}
+.pack-notice .muted {
+  color: #e6d6ad;
+}
+.pack-notice .ghost {
+  background: transparent;
+  border: 1px solid rgba(217, 180, 95, 0.7);
+  color: #fbefcf;
+}
+.pack-notice .ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.pack-btns {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pack-row {
+  align-items: flex-start;
+  gap: 12px;
+}
+.pack-row-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+  max-width: 300px;
+}
+
+/* a work episode's scene (EpisodeModal): the people talking a line at a time, then the decision */
+.modal.episode {
+  width: min(620px, 100%);
+}
+.ep-head h2 {
+  margin: 4px 0 0;
+}
+.ep-season {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font-size: 12px;
+}
+.ep-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 14px 0;
+  max-height: 46vh;
+  overflow: auto;
+}
+.ep-line {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 12px 12px 12px 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.ep-line.me {
+  align-self: flex-end;
+  border-radius: 12px 12px 4px 12px;
+  background: var(--accent-fill);
+  color: #fff;
+}
+.ep-who {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.ep-narration {
+  margin: 2px 4px;
+  font-style: italic;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ep-question {
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.ep-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.ep-write textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  color: inherit;
+  font: inherit;
+}
+.ep-write small {
+  display: block;
+  margin: 4px 0 8px;
+}
+
+/* a task card (CareerEventModal): the question, hints one at a time, the player's own answer, an example after */
+.task-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-ask {
+  font-weight: 700;
+  margin: 0;
+}
+.task-hint,
+.task-example,
+.task-mine {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+.task-example {
+  border-color: var(--accent);
+}
+.task-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  color: inherit;
+  font: inherit;
+}
+.task-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* What an answer at work came to (WorkResultModal). */
+.work-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.work-result > * {
+  margin: 0;
+}
+.wr-head {
+  font-weight: 800;
+  font-size: 16px;
+}
+.wr-head.good,
+.wr-changes .good {
+  color: var(--good-text);
+}
+.wr-head.bad,
+.wr-changes .bad {
+  color: var(--danger);
+}
+.wr-changes {
+  list-style: none;
+  padding: 8px 10px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* A colleague's goal, worry, good news and bonds (DwellerPanel ColleagueLine). */
+.colleague-life {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+.colleague-life .bad {
+  color: var(--danger);
+}
+.colleague-life .good {
+  color: var(--good-text);
+}

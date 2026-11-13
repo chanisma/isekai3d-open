@@ -1,0 +1,495 @@
+/*
+ * The stock app's phone (StockPhone.tsx, 2026-10-26): a phone body over the game with a bright app
+ * screen of its own — the same in the game's light and dark looks, as a phone is. Up red, down blue
+ * (Korean markets); the colours are in StockChart.tsx (UP, DOWN) and kept 4.5:1 on white.
+ */
+.stk-backdrop {
+  z-index: 40;
+}
+.stk-phone {
+  --stk-bg: #ffffff;
+  --stk-soft: #f3f5fa;
+  --stk-line: #e3e6ef;
+  --stk-text: #191f2e;
+  --stk-muted: #5b6275;
+  --stk-blue: #2a3c80;
+  --stk-up: #d32f2f;
+  --stk-down: #1e5bd8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(390px, 94vw);
+  height: min(800px, 94vh);
+  padding: 12px;
+  border-radius: 48px;
+  background: linear-gradient(160deg, #2b2f3a, #12141b 60%);
+  box-shadow: 0 0 0 2px #3c4150 inset, 0 24px 60px rgba(10, 14, 30, 0.55);
+  color: var(--stk-text);
+  overflow: hidden;
+  font-family: var(--font-body);
+}
+.stk-phone > * {
+  background: var(--stk-bg);
+}
+.stk-phone *,
+.stk-phone *::before,
+.stk-phone *::after {
+  box-sizing: border-box;
+}
+.stk-notch {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 96px;
+  height: 26px;
+  margin-left: -48px;
+  border-radius: 999px;
+  background: #0b0c10 !important;
+  z-index: 3;
+}
+.stk-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 18px 8px 24px;
+  border-radius: 36px 36px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.stk-wallet {
+  margin-left: auto;
+  margin-right: 70px;
+  font-variant-numeric: tabular-nums;
+}
+.stk-status .stk-wallet {
+  margin-right: 0;
+}
+.stk-screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.stk-pad {
+  padding: 4px 16px 18px;
+}
+.stk-phone h4 {
+  margin: 18px 2px 6px;
+  font-size: 14px;
+  color: var(--stk-text);
+}
+.stk-phone button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.stk-phone button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.stk-phone .muted {
+  color: var(--stk-muted);
+}
+.stk-icon {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--stk-soft);
+  font-size: 20px;
+  line-height: 1;
+}
+.stk-icon.star.on {
+  color: #e0a100;
+}
+.stk-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--stk-line);
+  border-radius: 0 0 36px 36px;
+  padding: 6px 10px 14px;
+}
+.stk-tabs button {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 48px;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  color: var(--stk-muted);
+}
+.stk-tabs button.on {
+  color: var(--stk-blue);
+  font-weight: 700;
+}
+.stk-card {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--stk-soft);
+}
+.stk-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.stk-total b {
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.stk-total > span {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stk-total small,
+.stk-card small {
+  font-size: 12px;
+}
+.stk-phone .stk-link {
+  justify-self: start;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--stk-blue);
+  font-weight: 600;
+  font-size: 13px;
+}
+.stk-phone .stk-link.danger {
+  color: var(--stk-up);
+}
+.stk-row,
+.stk-order {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--stk-line);
+  background: none;
+  text-align: left;
+}
+.stk-row:hover {
+  background: var(--stk-soft);
+}
+.stk-row-name,
+.stk-order-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.stk-row-name b,
+.stk-order-name b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.stk-row-name small,
+.stk-order-name small {
+  color: var(--stk-muted);
+  font-size: 12px;
+}
+.stk-row-price {
+  display: grid;
+  justify-items: end;
+  font-variant-numeric: tabular-nums;
+}
+.stk-row-price b {
+  font-size: 14px;
+}
+.stk-row-price small {
+  font-size: 12px;
+  font-weight: 600;
+}
+.stk-order.off {
+  opacity: 0.55;
+}
+.stk-side {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.stk-side.buy {
+  background: var(--stk-up);
+}
+.stk-side.sell {
+  background: var(--stk-down);
+}
+.stk-search {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 14px;
+  margin-top: 6px;
+  border: 1px solid var(--stk-line) !important;
+  border-radius: 12px !important;
+  background: var(--stk-soft) !important;
+  color: var(--stk-text) !important;
+  font-size: 16px;
+}
+.stk-seg,
+.stk-sort,
+.stk-toggles,
+.stk-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.stk-seg button {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--stk-soft);
+  font-weight: 600;
+  font-size: 14px;
+}
+.stk-seg.small button {
+  min-height: 34px;
+  font-size: 13px;
+}
+.stk-seg button.on {
+  background: var(--stk-blue);
+  color: #fff;
+}
+.stk-seg small {
+  font-weight: 400;
+  opacity: 0.75;
+}
+.stk-sort button,
+.stk-toggles button,
+.stk-quick button {
+  min-height: 34px;
+  padding: 4px 12px;
+  border: 1px solid var(--stk-line);
+  border-radius: 999px;
+  background: var(--stk-bg);
+  font-size: 13px;
+}
+.stk-sort button.on,
+.stk-toggles button.on.dark {
+  background: var(--stk-text);
+  border-color: var(--stk-text);
+  color: #fff;
+}
+.stk-toggles .stk-help {
+  border-style: dashed;
+  color: var(--stk-muted);
+}
+.stk-quick button {
+  flex: 1;
+}
+.stk-quote {
+  display: grid;
+  gap: 2px;
+  margin: 6px 2px 0;
+}
+.stk-quote b {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+.stk-quote span {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.stk-quote small {
+  font-size: 12px;
+}
+.stk-chart {
+  margin-top: 8px;
+}
+.stk-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+.stk-axis {
+  font-size: 9px;
+  fill: var(--stk-muted);
+  font-variant-numeric: tabular-nums;
+}
+.stk-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 20px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.stk-helpbox p {
+  font-size: 13px;
+}
+.stk-layer {
+  position: absolute;
+  inset: 12px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 36px;
+  overflow: hidden;
+  z-index: 2;
+}
+.stk-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 50px 14px 8px;
+  border-bottom: 1px solid var(--stk-line);
+}
+.stk-bar-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-weight: 700;
+}
+.stk-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 14px 18px;
+  border-top: 1px solid var(--stk-line);
+}
+.stk-btn {
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--stk-soft);
+  font-weight: 700;
+  font-size: 16px;
+}
+.stk-btn.buy {
+  background: var(--stk-up);
+  color: #fff;
+}
+.stk-btn.sell {
+  background: var(--stk-down);
+  color: #fff;
+}
+.stk-btn.wide {
+  width: 100%;
+  margin-top: 12px;
+}
+.stk-sheet-back {
+  position: absolute;
+  inset: 12px;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 36px;
+  background: rgba(15, 20, 35, 0.45) !important;
+  z-index: 4;
+  overflow: hidden;
+}
+.stk-sheet {
+  width: 100%;
+  overflow-x: hidden;
+  max-height: 88%;
+  overflow-y: auto;
+  padding: 16px 18px 22px;
+  border-radius: 24px 24px 0 0;
+  background: var(--stk-bg);
+}
+.stk-sheet header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 17px;
+}
+.stk-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--stk-muted);
+}
+.stk-field div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 2px solid var(--stk-blue);
+  border-radius: 14px;
+}
+.stk-field input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 0 !important;
+  background: none !important;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--stk-text) !important;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.stk-field em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--stk-text);
+}
+.stk-preview {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  margin: 14px 0 0;
+  font-size: 14px;
+}
+.stk-preview dt {
+  color: var(--stk-muted);
+}
+.stk-preview dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.stk-fine {
+  margin: 12px 2px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--stk-muted);
+}
+.stk-problem {
+  margin: 10px 0 0;
+  color: var(--stk-up);
+  font-weight: 600;
+  font-size: 13px;
+}
+.stk-empty {
+  padding: 14px 4px;
+  font-size: 13px;
+  color: var(--stk-muted);
+  text-align: center;
+}
+.stk-note {
+  margin: 10px 16px 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: #fff4e5;
+  color: #7a4a00;
+  font-size: 14px;
+}
+.stk-note p {
+  margin: 0 0 8px;
+}
+.stk-dev {
+  margin: 6px 16px 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #fff4e5;
+  color: #7a4a00;
+  font-size: 12px;
+}

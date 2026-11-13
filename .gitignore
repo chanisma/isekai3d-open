@@ -1,0 +1,15 @@
+node_modules
+dist
+*.log
+.playwright-mcp
+
+# VRoid models: the game's reduced models/*.vrm are kept; the sources, the originals and the VRoid
+# samples (whose licence allows no redistribution) are not (models/README.md)
+models/*sample_*.vrm
+models/vroid/
+models/compare/
+models/original/
+
+# Local fitting prototypes; regenerate with prototypes/build_off_duty.py.
+prototypes/generated/
+prototypes/__pycache__/

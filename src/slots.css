@@ -1,0 +1,277 @@
+/* ==========================================================================================
+ * The save slots (ui/SaveSlots.tsx): a book of three records — parchment cards framed in gold,
+ * a navy medallion with the slot's numeral, the household's faces, the day and money.
+ * ========================================================================================== */
+
+.slots-backdrop {
+  /* over the guide card and the top bar's menus */
+  z-index: 900;
+}
+.modal.slots {
+  width: min(860px, calc(100vw - 32px));
+  max-width: none;
+}
+.modal.slots h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slots-close {
+  margin-left: auto;
+  background: transparent;
+  border-color: rgba(217, 180, 95, 0.55);
+}
+.slots-close .ui-icon {
+  color: #f0d48a;
+}
+.slots-lead {
+  margin: 4px 0 14px;
+  color: var(--muted);
+}
+.slot-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .slot-row {
+    grid-template-columns: 1fr;
+  }
+}
+.slot-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.slot-face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 228px;
+  padding: 34px 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--accent);
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(240, 212, 138, 0.22), transparent 60%),
+    var(--panel-solid);
+  box-shadow:
+    inset 0 0 0 3px var(--panel-solid),
+    inset 0 0 0 4px rgba(201, 161, 74, 0.35),
+    var(--shadow-sm);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.slot-face:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 0 3px var(--panel-solid),
+    inset 0 0 0 4px rgba(201, 161, 74, 0.6),
+    0 0 0 2px rgba(240, 212, 138, 0.5),
+    var(--shadow);
+}
+.slot-face:disabled {
+  cursor: default;
+}
+.slot-card.off .slot-face {
+  opacity: 0.55;
+}
+.slot-card.mine .slot-face {
+  border-color: var(--navy-2);
+  box-shadow:
+    inset 0 0 0 3px var(--panel-solid),
+    inset 0 0 0 4px rgba(36, 53, 122, 0.4),
+    0 0 0 2px rgba(240, 212, 138, 0.6),
+    var(--shadow-sm);
+}
+.slot-num {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4f66b8, #24357a 60%, #16224d);
+  border: 2px solid #d9b45f;
+  box-shadow: 0 0 0 3px rgba(240, 212, 138, 0.35), 0 3px 8px rgba(22, 34, 77, 0.35);
+  color: #f6dd98;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+}
+.slot-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--navy-grad);
+  color: #fbefcf;
+  font-size: 11px;
+}
+.slot-blank {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+.slot-blank .ui-icon {
+  width: 46px;
+  height: 46px;
+  opacity: 0.45;
+}
+.slot-people {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.slot-head {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #d9b45f;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(22, 34, 77, 0.25);
+}
+.slot-head .hair {
+  position: absolute;
+  inset: 0 0 62% 0;
+}
+.slot-head .shirt {
+  position: absolute;
+  inset: 78% 0 0 0;
+}
+.slot-head.gone {
+  background: var(--track);
+}
+.slot-names {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--accent-2-dark);
+  text-align: center;
+}
+.slot-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 13.5px;
+}
+.slot-stats span {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.slot-when {
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.slot-wipe {
+  align-self: center;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.slot-wipe:hover {
+  color: var(--bad-text);
+}
+.slot-wipe .ui-icon {
+  color: currentColor;
+}
+.slot-ask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(22, 34, 77, 0.92);
+  border: 1.5px solid #d9b45f;
+  color: #fbefcf;
+  text-align: center;
+  font-size: 14px;
+}
+.slot-ask p {
+  margin: 0;
+}
+.slot-ask div {
+  display: flex;
+  gap: 8px;
+}
+.slot-ask .ghost {
+  color: #fbefcf;
+  border-color: rgba(217, 180, 95, 0.6);
+  background: transparent;
+}
+button.primary.danger {
+  background: linear-gradient(180deg, #b3402f, #8a2a1f);
+  border-color: #f0b38a;
+}
+
+/* a question before something big (ui/ConfirmDialog.tsx) */
+.modal.confirm-box {
+  width: min(440px, calc(100vw - 32px));
+}
+.modal.confirm-box h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal.confirm-box h2 .ui-icon {
+  color: #f0d48a;
+}
+.confirm-body p {
+  margin: 4px 0 14px;
+  line-height: 1.6;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* where a slot's story is kept (cloud/saveCloud.ts) */
+.slot-sync {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+}
+.slot-sync.synced {
+  border-color: rgba(27, 110, 46, 0.4);
+  color: var(--good-text);
+}
+.slot-sync.server,
+.slot-sync.serverNewer {
+  border-color: var(--accent);
+  color: var(--gold-text);
+}

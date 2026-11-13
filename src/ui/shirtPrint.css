@@ -1,0 +1,15 @@
+.shirt-print { margin: 20px 0; padding: 16px; border: 1px solid #aa917253; border-radius: 12px; background: #ad91720a; }
+.shirt-print h3 { margin: 0 0 8px; font-size: 16px; }
+.shirt-print p { font-size: 12px; line-height: 1.6; opacity: .8; }
+.shirt-print fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.shirt-print fieldset:disabled { opacity: .45; }
+.shirt-print label { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 12px; }
+.shirt-print input[type=range] { flex: 1; min-width: 40px; width: 80px; accent-color: #9b7751; }
+.shirt-print input[type=color] { width: 48px; height: 30px; padding: 2px; }
+.shirt-print output { width: 38px; text-align: right; }
+.shirt-print .print-upload { display: block; }
+.print-upload input { display: block; width: 100%; margin-top: 8px; font-size: 12px; }
+.print-art { display: grid; place-items: center; height: 100px; border-radius: 8px; }
+.print-art img { max-width: 90%; max-height: 90px; object-fit: contain; }
+.print-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.print-actions button, .shirt-print select { padding: 6px 9px; border: 1px solid #aa917266; border-radius: 6px; color: inherit; background: transparent; font-size: 12px; }

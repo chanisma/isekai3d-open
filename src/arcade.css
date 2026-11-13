@@ -1,0 +1,224 @@
+/* ==========================================================================================
+ * The arcade the game opens on, and today's play (2026-10-20, ui/Arcade.tsx · ui/PlayTime.tsx):
+ * navy and gold like the title art, the coin button as the title's START plate.
+ * ========================================================================================== */
+
+.arcade {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #0b1129;
+  transition: opacity 0.65s ease;
+}
+.arcade.leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+.arcade-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.arcade-ui {
+  position: absolute;
+  left: 50%;
+  bottom: max(28px, 4vh);
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #f3ead2;
+  font-family: var(--font-display);
+  text-align: center;
+  animation: arcade-in 0.6s ease both 0.3s;
+}
+@keyframes arcade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+.arcade-coin {
+  min-width: 300px;
+  padding: 12px 34px 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-radius: 14px;
+  border: 2px solid #d9b45f;
+  background: linear-gradient(180deg, rgba(43, 63, 136, 0.96) 0%, rgba(22, 34, 77, 0.96) 100%);
+  color: #fbefcf;
+  font-family: var(--font-display);
+  box-shadow:
+    inset 0 0 0 2px rgba(248, 227, 164, 0.22),
+    0 0 0 4px rgba(11, 17, 41, 0.6),
+    0 0 26px rgba(240, 200, 110, 0.4);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.arcade-coin:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 2px rgba(248, 227, 164, 0.4),
+    0 0 0 4px rgba(11, 17, 41, 0.6),
+    0 0 36px rgba(240, 200, 110, 0.65);
+}
+.arcade-coin.ghost {
+  min-width: 160px;
+  padding: 8px 20px;
+  font-size: 15px;
+}
+.ac-main {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f6dd98;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+.ac-sub {
+  font-size: 14px;
+  color: #e9e1c7;
+}
+.arcade-line {
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: rgba(11, 17, 41, 0.72);
+  border: 1px solid rgba(217, 180, 95, 0.55);
+  font-size: 16px;
+}
+.arcade-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(11, 17, 41, 0.7);
+  border: 1px solid rgba(217, 180, 95, 0.45);
+  font-size: 13.5px;
+  color: #e9e1c7;
+}
+.af-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.af-coins i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid #d9b45f;
+  background: transparent;
+}
+.af-coins i.used {
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #e0b85c 55%, #a97c2c);
+}
+.af-coins span {
+  margin-left: 4px;
+}
+.af-more {
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid #d9b45f;
+  background: rgba(217, 180, 95, 0.16);
+  color: #f6dd98;
+  font: inherit;
+  cursor: pointer;
+}
+.af-more:hover {
+  background: rgba(217, 180, 95, 0.3);
+}
+.arcade-error {
+  margin: 0;
+  padding: 7px 14px;
+  border-radius: 10px;
+  background: rgba(120, 20, 20, 0.75);
+  border: 1px solid #ef9a9a;
+  color: #fff1f1;
+  font-size: 14px;
+}
+
+/* ---- the top bar's meter ---- */
+.play-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 180, 95, 0.6);
+  background: rgba(255, 255, 255, 0.07);
+  color: #f3ead2;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.play-meter.low {
+  border-color: #ffb347;
+  color: #ffd68a;
+  animation: play-low 1.6s ease-in-out infinite;
+}
+@keyframes play-low {
+  50% {
+    box-shadow: 0 0 10px rgba(255, 179, 71, 0.55);
+  }
+}
+
+/* ---- today's play used up: the meter is the way to the arcade ---- */
+.play-meter.out {
+  border: 1.5px solid #f8e3a4;
+  background: var(--gold-grad);
+  color: #16224d;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  animation: play-out 1.4s ease-in-out infinite;
+}
+@keyframes play-out {
+  50% {
+    box-shadow: 0 0 14px rgba(255, 214, 138, 0.85);
+  }
+}
+.arcade-back {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 180, 95, 0.6);
+  background: rgba(11, 17, 41, 0.75);
+  color: #f3ead2;
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.arcade-back:hover {
+  background: rgba(217, 180, 95, 0.22);
+}
+.arcade-back .ui-icon {
+  color: #f0d48a;
+}
+
+/* a gold coin in place of 🪙 (not in the game's emoji font) */
+.coin-ico {
+  display: inline-block;
+  width: 0.95em;
+  height: 0.95em;
+  margin-right: 0.15em;
+  vertical-align: -0.12em;
+  border-radius: 50%;
+  border: 1.5px solid #8a6420;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #e0b85c 55%, #a97c2c);
+  box-shadow: inset 0 0 0 2px rgba(255, 243, 196, 0.35);
+}

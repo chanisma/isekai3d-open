@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/webp" href="/src/assets/ui/emblem.webp" />
+    <script>
+      // The theme picked last time (a per-viewer convenience; light, after 참고 게임, by default).
+      try {
+        if (localStorage.getItem('isekai3d.theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch (e) {}
+    </script>
+    <title>고등학생이었던 내가 이세계에서는 사회인?</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
